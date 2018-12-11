@@ -47,7 +47,8 @@ class FreelyScrollGridLayoutManager(private val columnCount: Int) : RecyclerView
 
         var position = firstVisiblePosition
         val offsetX = parentLeft
-        var offsetY = parentTop
+        var offsetY = findViewByPosition(position)?.top ?: parentTop
+        detachAndScrapAttachedViews(recycler)
         while (position < itemCount && offsetY < parentBottom) {
             offsetY += fillRow(position, offsetX, offsetY, recycler)
             position += columnCount
