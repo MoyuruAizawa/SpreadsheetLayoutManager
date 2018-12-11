@@ -1,5 +1,7 @@
 package io.moyuru.freelyscrollgridlayoutmanager
 
+import android.os.Bundle
+import android.os.Parcelable
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.Recycler
@@ -8,6 +10,10 @@ import kotlin.math.max
 import kotlin.math.min
 
 class FreelyScrollGridLayoutManager(private val columnCount: Int) : RecyclerView.LayoutManager() {
+    companion object {
+        const val KEY_FIRST_VISIBLE_POSITION = "firstVisible"
+        const val KEY_LAST_VISIBLE_POSITION = "lastVisiblePosition"
+    }
     private val parentLeft get() = paddingLeft
     private val parentTop get() = paddingTop
     private val parentRight get() = width - paddingRight
@@ -35,6 +41,18 @@ class FreelyScrollGridLayoutManager(private val columnCount: Int) : RecyclerView
 
     override fun generateDefaultLayoutParams(): RecyclerView.LayoutParams {
         return RecyclerView.LayoutParams(RecyclerView.LayoutParams.WRAP_CONTENT, RecyclerView.LayoutParams.WRAP_CONTENT)
+    }
+
+    override fun onSaveInstanceState() = Bundle().apply {
+        putInt(KEY_FIRST_VISIBLE_POSITION, firstVisiblePosition)
+        putInt(KEY_LAST_VISIBLE_POSITION, lastVisiblePosition)
+    }
+
+    override fun onRestoreInstanceState(state: Parcelable?) {
+        (state as? Bundle)?.let {
+            firstVisiblePosition = it.getInt(KEY_FIRST_VISIBLE_POSITION)
+            lastVisiblePosition = it.getInt(KEY_LAST_VISIBLE_POSITION)
+        }
     }
 
     override fun onLayoutChildren(recycler: RecyclerView.Recycler, state: RecyclerView.State) {
