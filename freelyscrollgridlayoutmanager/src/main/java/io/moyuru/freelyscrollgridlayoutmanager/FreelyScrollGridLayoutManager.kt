@@ -1,5 +1,6 @@
 package io.moyuru.freelyscrollgridlayoutmanager
 
+import android.content.Context
 import android.os.Bundle
 import android.os.Parcelable
 import android.view.View
@@ -9,7 +10,18 @@ import androidx.recyclerview.widget.RecyclerView.State
 import kotlin.math.max
 import kotlin.math.min
 
-class FreelyScrollGridLayoutManager(private val columnCount: Int) : RecyclerView.LayoutManager() {
+class FreelyScrollGridLayoutManager(
+  private val columnCount: Int,
+  private val columnWidthPx: Int,
+  private val columnHeightPx: Int
+) : RecyclerView.LayoutManager() {
+
+  constructor(context: Context, columnCount: Int, columnWidthDp: Int, columnHeightDp: Int) : this(
+    columnCount,
+    (context.resources.displayMetrics.density * columnWidthDp).toInt(),
+    (context.resources.displayMetrics.density * columnHeightDp).toInt()
+  )
+
   companion object {
     const val KEY_FIRST_VISIBLE_POSITION = "firstVisible"
     const val KEY_LAST_VISIBLE_POSITION = "lastVisiblePosition"
@@ -190,7 +202,10 @@ class FreelyScrollGridLayoutManager(private val columnCount: Int) : RecyclerView
   }
 
   private fun measureCell(view: View): Pair<Int, Int> {
-    measureChildWithMargins(view, 0, 0)
+    view.measure(
+      View.MeasureSpec.makeMeasureSpec(columnWidthPx, View.MeasureSpec.EXACTLY),
+      View.MeasureSpec.makeMeasureSpec(columnHeightPx, View.MeasureSpec.EXACTLY)
+    )
     return Pair(getDecoratedMeasuredWidth(view), getDecoratedMeasuredHeight(view))
   }
 
