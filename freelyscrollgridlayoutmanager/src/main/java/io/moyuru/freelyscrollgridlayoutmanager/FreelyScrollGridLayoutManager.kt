@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView.Recycler
 import androidx.recyclerview.widget.RecyclerView.State
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 class FreelyScrollGridLayoutManager(
   private val columnCount: Int,
@@ -38,6 +39,8 @@ class FreelyScrollGridLayoutManager(
   private val Int.isLastInColumn get() = this >= itemCount - columnCount
 
   private val visibleColumnCount get() = visibleRightTopPosition - firstVisiblePosition + 1
+
+  private var pendingScrollPosition: Int? = null
 
   var firstVisiblePosition = 0
     private set(value) {
@@ -72,10 +75,15 @@ class FreelyScrollGridLayoutManager(
     if (itemCount == 0) {
       firstVisiblePosition = 0
       lastVisiblePosition = 0
+      pendingScrollPosition = null
       detachAndScrapAttachedViews(recycler)
       return
     }
 
+    pendingScrollPosition?.let {
+      firstVisiblePosition = it
+      pendingScrollPosition = null
+    }
     var position = firstVisiblePosition
     val offsetX = parentLeft
     var offsetY = findViewByPosition(position)?.top ?: parentTop
@@ -92,6 +100,11 @@ class FreelyScrollGridLayoutManager(
     if (absX < firstVisiblePosition % columnCount || absX > lastVisiblePosition % columnCount) return null
 
     return super.findViewByPosition(position)
+  }
+
+  override fun scrollToPosition(position: Int) {
+    pendingScrollPosition = adjustScrollPosition(position)
+    requestLayout()
   }
 
   override fun canScrollVertically() = true
@@ -290,6 +303,27 @@ class FreelyScrollGridLayoutManager(
 
     if (from == firstVisiblePosition) firstVisiblePosition += 1
     if (to == lastVisiblePosition) lastVisiblePosition -= 1
+  }
+
+  private fun adjustScrollPosition(targetScrollPosition: Int): Int {
+    val rowPosition = targetScrollPosition / columnCount
+    val rowCount = (itemCount.toFloat() / columnCount).roundToInt()
+    val availableRowCount = (parentBottom.toFloat() / columnHeightPx).roundToInt()
+    val step1 = if (rowCount - rowPosition < availableRowCount) {
+      val shortageRowCount = availableRowCount - (rowCount - rowPosition)
+      (targetScrollPosition - shortageRowCount * columnCount).let { if (it < 0) 0 else it }
+    } else {
+      targetScrollPosition
+    }
+
+    val columnPosition = (step1 % columnCount)
+    val availableColumnCount = (parentRight.toFloat() / columnWidthPx).roundToInt()
+    return if (columnCount - columnPosition < availableColumnCount) {
+      val shortageColumnCount = availableColumnCount - (columnCount - columnPosition)
+      (step1 - shortageColumnCount).let { if (it < 0) 0 else it }
+    } else {
+      step1
+    }
   }
 
   private fun getAboveCell(position: Int) = position - columnCount
