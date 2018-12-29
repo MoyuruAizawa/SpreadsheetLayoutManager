@@ -13,7 +13,8 @@ class MainActivity : AppCompatActivity() {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
 
-    recycler.layoutManager = FreelyScrollGridLayoutManager(this, columnCount = 10, columnWidthDp = 100, columnHeightDp = 100)
+    val layoutManager = FreelyScrollGridLayoutManager(this, columnCount = 10, columnWidthDp = 100, columnHeightDp = 100)
+    recycler.layoutManager = layoutManager
     recycler.addItemDecoration(DividerDecoration())
     recycler.adapter = GroupAdapter<ViewHolder>().apply { addAll(List(200) { NumberItem(it) }) }
   }

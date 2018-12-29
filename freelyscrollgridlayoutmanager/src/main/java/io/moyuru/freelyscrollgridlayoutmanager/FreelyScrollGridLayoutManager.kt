@@ -14,8 +14,8 @@ import kotlin.math.roundToInt
 
 class FreelyScrollGridLayoutManager(
   private val columnCount: Int,
-  private val columnWidthPx: Int,
-  private val columnHeightPx: Int
+  private val cellWidth: Int,
+  private val cellHeight: Int
 ) : RecyclerView.LayoutManager() {
 
   constructor(context: Context, columnCount: Int, columnWidthDp: Int, columnHeightDp: Int) : this(
@@ -217,8 +217,8 @@ class FreelyScrollGridLayoutManager(
 
   private fun measureCell(view: View) {
     val insets = Rect().apply { calculateItemDecorationsForChild(view, this) }
-    val width = columnWidthPx + insets.left + insets.right
-    val height = columnHeightPx + insets.top + insets.bottom
+    val width = cellWidth + insets.left + insets.right
+    val height = cellHeight + insets.top + insets.bottom
     view.measure(
       View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
       View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY)
@@ -235,14 +235,13 @@ class FreelyScrollGridLayoutManager(
     var position = from
     while (position <= to && position < itemCount && offsetX < parentRight) {
       val v = recycler.getViewForPosition(position)
+      if (isPrepend) addView(v, insertPosition) else addView(v)
 
       measureCell(v)
       val width = getDecoratedMeasuredWidth(v)
       val height = getDecoratedMeasuredHeight(v)
       val l = offsetX
       val t = if (isPrepend) startY - height else startY
-
-      if (isPrepend) addView(v, insertPosition) else addView(v)
       layoutDecorated(v, l, t, l + width, t + height)
 
       offsetX += width
@@ -262,23 +261,23 @@ class FreelyScrollGridLayoutManager(
     var offsetY = startY
     var columnWidth = 0
     val visibleColumnCount = visibleColumnCount
-    var insertPosition = if (isPrepend) 0 else visibleColumnCount + 1
+    var insertPosition = if (isPrepend) 0 else visibleColumnCount
 
     var position = from
     while (position < itemCount && offsetY < parentBottom) {
       val v = recycler.getViewForPosition(position)
+      addView(v, insertPosition)
+
       measureCell(v)
       val width = getDecoratedMeasuredWidth(v)
       val height = getDecoratedMeasuredHeight(v)
       val l = if (isPrepend) startX - width else startX
       val t = offsetY
-
-      addView(v, insertPosition)
       layoutDecorated(v, l, t, l + width, t + height)
 
       offsetY += height
       columnWidth = max(columnWidth, width)
-      insertPosition += visibleColumnCount
+      insertPosition += visibleColumnCount + 1
       position = getBelowCell(position)
     }
 
@@ -288,10 +287,7 @@ class FreelyScrollGridLayoutManager(
   }
 
   private fun recycleCell(position: Int, recycler: Recycler) {
-    findViewByPosition(position)?.let {
-      (it.layoutParams as RecyclerView.LayoutParams)
-      removeAndRecycleView(it, recycler)
-    }
+    findViewByPosition(position)?.let { removeAndRecycleView(it, recycler) }
   }
 
   private fun recycleRow(from: Int, to: Int, recycler: Recycler) {
@@ -315,7 +311,7 @@ class FreelyScrollGridLayoutManager(
   private fun adjustScrollPosition(targetScrollPosition: Int): Int {
     val rowPosition = targetScrollPosition / columnCount
     val rowCount = (itemCount.toFloat() / columnCount).roundToInt()
-    val availableRowCount = (parentBottom.toFloat() / columnHeightPx).roundToInt()
+    val availableRowCount = (parentBottom.toFloat() / cellHeight).roundToInt()
     val step1 = if (rowCount - rowPosition < availableRowCount) {
       val shortageRowCount = availableRowCount - (rowCount - rowPosition)
       (targetScrollPosition - shortageRowCount * columnCount).let { if (it < 0) 0 else it }
@@ -324,7 +320,7 @@ class FreelyScrollGridLayoutManager(
     }
 
     val columnPosition = (step1 % columnCount)
-    val availableColumnCount = (parentRight.toFloat() / columnWidthPx).roundToInt()
+    val availableColumnCount = (parentRight.toFloat() / cellWidth).roundToInt()
     return if (columnCount - columnPosition < availableColumnCount) {
       val shortageColumnCount = availableColumnCount - (columnCount - columnPosition)
       (step1 - shortageColumnCount).let { if (it < 0) 0 else it }
