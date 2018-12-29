@@ -1,6 +1,7 @@
 package io.moyuru.freelyscrollgridlayoutmanager
 
 import android.content.Context
+import android.graphics.Rect
 import android.os.Bundle
 import android.os.Parcelable
 import android.view.View
@@ -214,12 +215,14 @@ class FreelyScrollGridLayoutManager(
       fillColumn(firstInPreviousColumn, left, getDecoratedTop(firstItem), recycler)
   }
 
-  private fun measureCell(view: View): Pair<Int, Int> {
+  private fun measureCell(view: View) {
+    val insets = Rect().apply { calculateItemDecorationsForChild(view, this) }
+    val width = columnWidthPx + insets.left + insets.right
+    val height = columnHeightPx + insets.top + insets.bottom
     view.measure(
-      View.MeasureSpec.makeMeasureSpec(columnWidthPx, View.MeasureSpec.EXACTLY),
-      View.MeasureSpec.makeMeasureSpec(columnHeightPx, View.MeasureSpec.EXACTLY)
+      View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+      View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY)
     )
-    return Pair(getDecoratedMeasuredWidth(view), getDecoratedMeasuredHeight(view))
   }
 
   private fun fillRow(from: Int, startX: Int, startY: Int, recycler: RecyclerView.Recycler): Int {
@@ -233,7 +236,9 @@ class FreelyScrollGridLayoutManager(
     while (position <= to && position < itemCount && offsetX < parentRight) {
       val v = recycler.getViewForPosition(position)
 
-      val (width, height) = measureCell(v)
+      measureCell(v)
+      val width = getDecoratedMeasuredWidth(v)
+      val height = getDecoratedMeasuredHeight(v)
       val l = offsetX
       val t = if (isPrepend) startY - height else startY
 
@@ -262,7 +267,9 @@ class FreelyScrollGridLayoutManager(
     var position = from
     while (position < itemCount && offsetY < parentBottom) {
       val v = recycler.getViewForPosition(position)
-      val (width, height) = measureCell(v)
+      measureCell(v)
+      val width = getDecoratedMeasuredWidth(v)
+      val height = getDecoratedMeasuredHeight(v)
       val l = if (isPrepend) startX - width else startX
       val t = offsetY
 
