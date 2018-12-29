@@ -238,7 +238,7 @@ class FreelyScrollGridLayoutManager(
       val t = if (isPrepend) startY - height else startY
 
       if (isPrepend) addView(v, insertPosition) else addView(v)
-      layoutDecorated(v, l, t, l + v.measuredWidth, t + v.measuredHeight)
+      layoutDecorated(v, l, t, l + width, t + height)
 
       offsetX += width
       rowHeight = max(rowHeight, height)
@@ -267,7 +267,7 @@ class FreelyScrollGridLayoutManager(
       val t = offsetY
 
       addView(v, insertPosition)
-      layoutDecorated(v, l, t, l + v.measuredWidth, t + v.measuredHeight)
+      layoutDecorated(v, l, t, l + width, t + height)
 
       offsetY += height
       columnWidth = max(columnWidth, width)
