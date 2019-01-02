@@ -117,12 +117,33 @@ class FreelyScrollGridLayoutManager(
 
     val firstItem = getChildAt(0) ?: return 0
     val lastItem = getChildAt(childCount - 1) ?: return 0
-    val actualScrollAmount = calcVerticallyScrollAmount(firstItem, lastItem, dy)
+    val scrollAmount = calcVerticallyScrollAmount(firstItem, lastItem, dy)
 
-    if (dy > 0) onUpSwipe(firstItem, lastItem, actualScrollAmount, recycler)
-    else onDownSwipe(firstItem, lastItem, actualScrollAmount, recycler)
+    offsetChildrenVertical(-scrollAmount)
 
-    offsetChildrenVertical(-actualScrollAmount)
+    val firstTop = getDecoratedTop(firstItem)
+    val lastBottom = getDecoratedBottom(lastItem)
+
+    if (dy > 0) {
+      val position = getBelowCell(visibleLeftBottomPosition)
+      if (lastBottom <= parentBottom && position < itemCount)
+        fillRow(position, getDecoratedLeft(firstItem), lastBottom, recycler)
+    } else {
+      val position = getAboveCell(firstVisiblePosition)
+      if (firstTop >= parentTop && position >= 0)
+        fillRow(position, getDecoratedLeft(firstItem), getDecoratedTop(firstItem), recycler)
+    }
+
+    val gap = calcVerticallyLayoutGap(dy)
+    if (gap != 0) offsetChildrenVertical(gap)
+    val actualScrollAmount = scrollAmount - gap
+
+    if (dy > 0) {
+      if (getDecoratedBottom(firstItem) < parentTop) recycleRow(firstVisiblePosition, visibleRightTopPosition, recycler)
+    } else {
+      if (getDecoratedTop(lastItem) > parentBottom) recycleRow(visibleLeftBottomPosition, lastVisiblePosition, recycler)
+    }
+
     return actualScrollAmount
   }
 
@@ -131,12 +152,37 @@ class FreelyScrollGridLayoutManager(
 
     val firstItem = getChildAt(0) ?: return 0
     val lastItem = getChildAt(childCount - 1) ?: return 0
-    val actualScrollAmount = calcHorizontallyScrollAmount(firstItem, lastItem, dx)
+    val scrollAmount = calcHorizontallyScrollAmount(firstItem, lastItem, dx)
 
-    if (dx > 0) onLeftSwipe(firstItem, actualScrollAmount, recycler)
-    else onRightSwipe(firstItem, actualScrollAmount, recycler)
+    offsetChildrenHorizontal(-scrollAmount)
 
-    offsetChildrenHorizontal(-actualScrollAmount)
+    val firstLeft = getDecoratedLeft(firstItem)
+    val lastRight = getDecoratedRight(lastItem)
+
+    if (dx > 0) {
+      if (!lastVisiblePosition.isLastInRow) {
+        val position = visibleRightTopPosition + 1
+        if (lastRight < parentRight && position < itemCount)
+          fillColumn(position, lastRight, getDecoratedTop(firstItem), recycler)
+      }
+    } else {
+      if (!firstVisiblePosition.isFirstInRow) {
+        val firstInPreviousColumn = firstVisiblePosition - 1
+        if (firstLeft >= parentLeft && firstInPreviousColumn >= 0)
+          fillColumn(firstInPreviousColumn, firstLeft, getDecoratedTop(firstItem), recycler)
+      }
+    }
+
+    val gap = calcHorizontallyLayoutGap(dx)
+    if (gap != 0) offsetChildrenHorizontal(gap)
+    val actualScrollAmount = scrollAmount - gap
+
+    if (dx > 0) {
+      if (getDecoratedRight(firstItem) < parentLeft) recycleColumn(firstVisiblePosition, visibleLeftBottomPosition, recycler)
+    } else {
+      if (getDecoratedLeft(lastItem) > parentRight) recycleColumn(visibleRightTopPosition, lastVisiblePosition, recycler)
+    }
+
     return actualScrollAmount
   }
 
@@ -154,6 +200,14 @@ class FreelyScrollGridLayoutManager(
     }
   }
 
+  private fun calcVerticallyLayoutGap(dy: Int): Int {
+    val gap = if (dy > 0) parentBottom - getDecoratedBottom(getChildAt(childCount - 1) ?: return 0)
+    else parentTop - getDecoratedTop(getChildAt(0) ?: return 0)
+
+    return if ((dy > 0 && gap > 0) || (dy < 0 && gap < 0)) gap
+    else 0
+  }
+
   private fun calcHorizontallyScrollAmount(firstItem: View, lastItem: View, dx: Int): Int {
     if (dx == 0) return 0
 
@@ -168,51 +222,12 @@ class FreelyScrollGridLayoutManager(
     }
   }
 
-  private fun onUpSwipe(firstItem: View, lastItem: View, scrollAmount: Int, recycler: Recycler) {
-    val bottom = getDecoratedBottom(lastItem)
+  private fun calcHorizontallyLayoutGap(dx: Int): Int {
+    val gap = if (dx > 0) parentRight - getDecoratedRight(getChildAt(childCount - 1) ?: return 0)
+    else parentLeft - getDecoratedLeft(getChildAt(0) ?: return 0)
 
-    if (getDecoratedBottom(firstItem) - scrollAmount < parentTop)
-      recycleRow(firstVisiblePosition, visibleRightTopPosition, recycler)
-
-    val firstInNextRow = getBelowCell(visibleLeftBottomPosition)
-    if ((bottom - scrollAmount) <= parentBottom && firstInNextRow < itemCount)
-      fillRow(firstInNextRow, getDecoratedLeft(firstItem), bottom, recycler)
-  }
-
-  private fun onDownSwipe(firstItem: View, lastItem: View, scrollAmount: Int, recycler: Recycler) {
-    val top = getDecoratedTop(firstItem)
-
-    if (getDecoratedTop(lastItem) - scrollAmount > parentBottom)
-      recycleRow(visibleLeftBottomPosition, lastVisiblePosition, recycler)
-
-    val firstInPreviousRow = getAboveCell(firstVisiblePosition)
-    if (top - scrollAmount >= parentTop && firstInPreviousRow >= 0)
-      fillRow(firstInPreviousRow, getDecoratedLeft(firstItem), getDecoratedTop(firstItem), recycler)
-  }
-
-  private fun onLeftSwipe(firstItem: View, scrollAmount: Int, recycler: Recycler) {
-    if (getDecoratedRight(firstItem) - scrollAmount < parentLeft)
-      recycleColumn(firstVisiblePosition, visibleLeftBottomPosition, recycler)
-
-    if (lastVisiblePosition.isLastInRow) return
-
-    val right = getDecoratedRight(findViewByPosition(visibleRightTopPosition) ?: return)
-    val firstInNextColumn = visibleRightTopPosition + 1
-    if (right - scrollAmount < parentRight && firstInNextColumn < itemCount)
-      fillColumn(firstInNextColumn, right, getDecoratedTop(firstItem), recycler)
-  }
-
-  private fun onRightSwipe(firstItem: View, scrollAmount: Int, recycler: Recycler) {
-    val leftOfLastItemInRow = getDecoratedLeft(findViewByPosition(visibleRightTopPosition) ?: return)
-    if (leftOfLastItemInRow - scrollAmount > parentRight)
-      recycleColumn(visibleRightTopPosition, lastVisiblePosition, recycler)
-
-    if (firstVisiblePosition.isFirstInRow) return
-
-    val left = getDecoratedLeft(firstItem)
-    val firstInPreviousColumn = firstVisiblePosition - 1
-    if (left - scrollAmount >= parentLeft && firstInPreviousColumn >= 0)
-      fillColumn(firstInPreviousColumn, left, getDecoratedTop(firstItem), recycler)
+    return if ((dx > 0 && gap > 0) || (dx < 0 && gap < 0)) gap
+    else 0
   }
 
   private fun measureCell(view: View) {
