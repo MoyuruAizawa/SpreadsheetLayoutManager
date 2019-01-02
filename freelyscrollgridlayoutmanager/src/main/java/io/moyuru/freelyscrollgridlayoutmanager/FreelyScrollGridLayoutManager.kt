@@ -115,8 +115,8 @@ class FreelyScrollGridLayoutManager(
   override fun scrollVerticallyBy(dy: Int, recycler: Recycler, state: State): Int {
     if (dy == 0) return 0
 
-    val firstItem = findViewByPosition(firstVisiblePosition) ?: return 0
-    val lastItem = findViewByPosition(lastVisiblePosition) ?: return 0
+    val firstItem = getChildAt(0) ?: return 0
+    val lastItem = getChildAt(childCount - 1) ?: return 0
     val actualScrollAmount = calcVerticallyScrollAmount(firstItem, lastItem, dy)
 
     if (dy > 0) onUpSwipe(firstItem, lastItem, actualScrollAmount, recycler)
@@ -129,8 +129,8 @@ class FreelyScrollGridLayoutManager(
   override fun scrollHorizontallyBy(dx: Int, recycler: Recycler, state: State): Int {
     if (dx == 0) return 0
 
-    val firstItem = findViewByPosition(firstVisiblePosition) ?: return 0
-    val lastItem = findViewByPosition(lastVisiblePosition) ?: return 0
+    val firstItem = getChildAt(0) ?: return 0
+    val lastItem = getChildAt(childCount - 1) ?: return 0
     val actualScrollAmount = calcHorizontallyScrollAmount(firstItem, lastItem, dx)
 
     if (dx > 0) onLeftSwipe(firstItem, actualScrollAmount, recycler)
