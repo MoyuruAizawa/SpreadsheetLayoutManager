@@ -234,10 +234,6 @@ class FreelyScrollGridLayoutManager(
     return Pair(width, height)
   }
 
-  private fun recycleCell(position: Int, recycler: Recycler) {
-    findViewByPosition(position)?.let { removeAndRecycleView(it, recycler) }
-  }
-
   private fun recycleRow(from: Int, to: Int, recycler: Recycler) {
     (from..to).forEach { recycleCell(it, recycler) }
 
@@ -245,27 +241,27 @@ class FreelyScrollGridLayoutManager(
       anchor.topLeft = getBelowCell(anchor.topLeft)
       anchor.topRight = getBelowCell(anchor.topRight)
     }
-    if (to == anchor.bottomRight) {
+    if (from == anchor.bottomLeft) {
       anchor.bottomLeft = getAboveCell(anchor.bottomLeft)
       anchor.bottomRight = getAboveCell(anchor.bottomRight)
     }
   }
 
   private fun recycleColumn(from: Int, to: Int, recycler: Recycler) {
-    var position = from
-    while (position <= to) {
-      recycleCell(position, recycler)
-      position = getBelowCell(position)
-    }
+    (from..to step columnCount).forEach { recycleCell(it, recycler) }
 
     if (from == anchor.topLeft) {
       anchor.topLeft++
       anchor.bottomLeft++
     }
-    if (to == anchor.bottomRight) {
+    if (from == anchor.topRight) {
       anchor.topRight--
       anchor.bottomRight--
     }
+  }
+
+  private fun recycleCell(position: Int, recycler: Recycler) {
+    findViewByPosition(position)?.let { removeAndRecycleView(it, recycler) }
   }
 
   private fun measureCell(view: View) {
