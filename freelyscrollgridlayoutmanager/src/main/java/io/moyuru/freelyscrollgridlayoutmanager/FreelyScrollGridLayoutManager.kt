@@ -54,13 +54,8 @@ class FreelyScrollGridLayoutManager(
     }
 
     detachAndScrapAttachedViews(recycler)
-    var position = 0
-    anchor.topLeft = position
-    var offsetY = parentTop
-    while (position < itemCount && offsetY < parentBottom) {
-      offsetY += fillRow(position, parentLeft, offsetY, true, recycler)
-      position += columnCount
-    }
+    anchor.topLeft = 0
+    fillVerticalChunk(0, parentLeft, parentTop, true, recycler)
   }
 
   override fun findViewByPosition(position: Int): View? {
@@ -85,7 +80,7 @@ class FreelyScrollGridLayoutManager(
       val bottom = getDecoratedBottom(bottomLeftItem)
       val position = getBelowCell(anchor.bottomLeft)
       if (bottom <= parentBottom && position < itemCount)
-        fillRow(position, getDecoratedLeft(topLeftItem), bottom, true, recycler)
+        fillVerticalChunk(position, getDecoratedLeft(topLeftItem), bottom, true, recycler)
 
       if (getDecoratedBottom(topLeftItem) < parentTop)
         recycleRow(anchor.topLeft, anchor.topRight, recycler)
@@ -93,7 +88,7 @@ class FreelyScrollGridLayoutManager(
       val top = getDecoratedTop(topLeftItem)
       val position = getAboveCell(anchor.topLeft)
       if (top >= parentTop && position >= 0)
-        fillRow(position, getDecoratedLeft(topLeftItem), getDecoratedTop(topLeftItem), false, recycler)
+        fillVerticalChunk(position, getDecoratedLeft(topLeftItem), getDecoratedTop(topLeftItem), false, recycler)
 
       if (getDecoratedTop(bottomLeftItem) > parentBottom)
         recycleRow(anchor.bottomLeft, anchor.bottomRight, recycler)
@@ -115,7 +110,7 @@ class FreelyScrollGridLayoutManager(
       val right = getDecoratedRight(topRightItem)
       val nextPosition = anchor.topRight + 1
       if (right < parentRight && !anchor.topRight.isLastInRow && nextPosition < itemCount)
-        fillColumn(nextPosition, right, getDecoratedTop(topLeftItem), true, recycler)
+        fillHorizontalChunk(nextPosition, right, getDecoratedTop(topLeftItem), true, recycler)
 
       if (getDecoratedRight(topLeftItem) < parentLeft)
         recycleColumn(anchor.topLeft, anchor.bottomLeft, recycler)
@@ -123,7 +118,7 @@ class FreelyScrollGridLayoutManager(
       val left = getDecoratedLeft(topLeftItem)
       val previousPosition = anchor.topLeft - 1
       if (left >= parentLeft && !anchor.topLeft.isFirstInRow && previousPosition >= 0)
-        fillColumn(previousPosition, left, getDecoratedTop(topLeftItem), false, recycler)
+        fillHorizontalChunk(previousPosition, left, getDecoratedTop(topLeftItem), false, recycler)
 
       if (getDecoratedLeft(topRightItem) > parentRight)
         recycleColumn(anchor.topRight, anchor.bottomRight, recycler)
@@ -157,6 +152,26 @@ class FreelyScrollGridLayoutManager(
       val left = getDecoratedLeft(topLeftItem)
       if (anchor.topLeft.isFirstInRow) if (left >= parentLeft) 0 else max(dx, -(parentLeft - left))
       else dx
+    }
+  }
+
+  private fun fillVerticalChunk(from: Int, offsetX: Int, startY: Int, isAppend: Boolean, recycler: Recycler) {
+    var offsetY = startY
+    val progression = if (isAppend) from until itemCount step columnCount else from downTo 0 step columnCount
+    for(position in progression) {
+      val rowHeight = fillRow(position, offsetX, offsetY, isAppend, recycler)
+      offsetY += if (isAppend) rowHeight else -rowHeight
+      if (if (isAppend) offsetY > parentBottom else offsetY < parentTop) break
+    }
+  }
+
+  private fun fillHorizontalChunk(from: Int, startX: Int, offsetY: Int, isAppend: Boolean, recycler: Recycler) {
+    var offsetX = startX
+    val range = if (isAppend) from..getLastCellInSameRow(from) else from downTo getFirstCellInSameRow(from)
+    for (position in range) {
+      val columnWidth = fillColumn(position, offsetX, offsetY, isAppend, recycler)
+      offsetX += if (isAppend) columnWidth else -columnWidth
+      if (if (isAppend) offsetX > parentRight else offsetX < parentLeft) break
     }
   }
 
@@ -280,10 +295,13 @@ class FreelyScrollGridLayoutManager(
 
   private fun getBelowCell(position: Int) = position + columnCount
 
-  private fun getLastCellInSameRow(position: Int) = position + (columnCount - 1) - position % columnCount
+  private fun getFirstCellInSameRow(position: Int) = position - position % columnCount
+
+  private fun getLastCellInSameRow(position: Int) = position + columnCount - position.oneBased % columnCount
 
   private val Int.isFirstInRow get() = this % columnCount == 0
   private val Int.isLastInRow get() = this % columnCount == columnCount - 1
   private val Int.isFirstInColumn get() = this < columnCount
   private val Int.isLastInColumn get() = this >= itemCount - columnCount
+  private val Int.oneBased get() = this + 1
 }
