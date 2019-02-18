@@ -1,6 +1,8 @@
 package io.moyuru.freelyscrollgridlayoutmanager
 
 import android.graphics.Rect
+import android.os.Parcel
+import android.os.Parcelable
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.NO_POSITION
@@ -37,13 +39,24 @@ class FreelyScrollGridLayoutManager(
   private val parentTop get() = paddingTop
   private val parentRight get() = width - paddingRight
   private val parentBottom get() = height - paddingBottom
-
   private val visibleColumnCount get() = anchor.topRight - anchor.topLeft + 1
 
   private var anchor = Anchor()
+  private var savedState: SavedState? = null
 
   override fun generateDefaultLayoutParams(): RecyclerView.LayoutParams {
     return RecyclerView.LayoutParams(RecyclerView.LayoutParams.WRAP_CONTENT, RecyclerView.LayoutParams.WRAP_CONTENT)
+  }
+
+  override fun onSaveInstanceState(): Parcelable? {
+    val topLeft = findViewByPosition(anchor.topLeft) ?: return null
+    val left = topLeft.let(::getDecoratedLeft)
+    val top = topLeft.let(::getDecoratedTop)
+    return SavedState(anchor.topLeft, left, top)
+  }
+
+  override fun onRestoreInstanceState(state: Parcelable?) {
+    savedState = (state as? SavedState)
   }
 
   override fun onLayoutChildren(recycler: Recycler, state: State) {
@@ -53,9 +66,25 @@ class FreelyScrollGridLayoutManager(
       return
     }
 
+    val topLeft = findViewByPosition(anchor.topLeft)
+    val restoredFirstPosition = savedState?.position ?: anchor.topLeft
+    val restoredOffsetX = savedState?.left ?: topLeft?.let(::getDecoratedLeft)
+    val restoredOffsetY = savedState?.top ?: topLeft?.let(::getDecoratedTop)
+
     detachAndScrapAttachedViews(recycler)
-    anchor.topLeft = 0
-    fillVerticalChunk(0, parentLeft, parentTop, true, recycler)
+    anchor.reset()
+
+    if (restoredFirstPosition != NO_POSITION && restoredOffsetX != null && restoredOffsetY != null) {
+      anchor.topLeft = restoredFirstPosition
+      fillVerticalChunk(restoredFirstPosition, restoredOffsetX, restoredOffsetY, true, recycler)
+    } else {
+      anchor.topLeft = 0
+      fillVerticalChunk(0, parentLeft, parentTop, true, recycler)
+    }
+  }
+
+  override fun onLayoutCompleted(state: State?) {
+    savedState = null
   }
 
   override fun findViewByPosition(position: Int): View? {
@@ -82,16 +111,14 @@ class FreelyScrollGridLayoutManager(
       if (bottom <= parentBottom && position < itemCount)
         fillVerticalChunk(position, getDecoratedLeft(topLeftItem), bottom, true, recycler)
 
-      if (getDecoratedBottom(topLeftItem) < parentTop)
-        recycleRow(anchor.topLeft, anchor.topRight, recycler)
+      recycleTopRows(recycler)
     } else {
       val top = getDecoratedTop(topLeftItem)
       val position = getAboveCell(anchor.topLeft)
       if (top >= parentTop && position >= 0)
         fillVerticalChunk(position, getDecoratedLeft(topLeftItem), getDecoratedTop(topLeftItem), false, recycler)
 
-      if (getDecoratedTop(bottomLeftItem) > parentBottom)
-        recycleRow(anchor.bottomLeft, anchor.bottomRight, recycler)
+      recycleBottomRows(recycler)
     }
 
     return scrollAmount
@@ -112,16 +139,14 @@ class FreelyScrollGridLayoutManager(
       if (right < parentRight && !anchor.topRight.isLastInRow && nextPosition < itemCount)
         fillHorizontalChunk(nextPosition, right, getDecoratedTop(topLeftItem), true, recycler)
 
-      if (getDecoratedRight(topLeftItem) < parentLeft)
-        recycleColumn(anchor.topLeft, anchor.bottomLeft, recycler)
+      recycleLeftColumns(recycler)
     } else {
       val left = getDecoratedLeft(topLeftItem)
       val previousPosition = anchor.topLeft - 1
       if (left >= parentLeft && !anchor.topLeft.isFirstInRow && previousPosition >= 0)
         fillHorizontalChunk(previousPosition, left, getDecoratedTop(topLeftItem), false, recycler)
 
-      if (getDecoratedLeft(topRightItem) > parentRight)
-        recycleColumn(anchor.topRight, anchor.bottomRight, recycler)
+      recycleRightColumns(recycler)
     }
 
     return scrollAmount
@@ -158,7 +183,7 @@ class FreelyScrollGridLayoutManager(
   private fun fillVerticalChunk(from: Int, offsetX: Int, startY: Int, isAppend: Boolean, recycler: Recycler) {
     var offsetY = startY
     val progression = if (isAppend) from until itemCount step columnCount else from downTo 0 step columnCount
-    for(position in progression) {
+    for (position in progression) {
       val rowHeight = fillRow(position, offsetX, offsetY, isAppend, recycler)
       offsetY += if (isAppend) rowHeight else -rowHeight
       if (if (isAppend) offsetY > parentBottom else offsetY < parentTop) break
@@ -234,6 +259,40 @@ class FreelyScrollGridLayoutManager(
     return Pair(width, height)
   }
 
+  private fun recycleTopRows(recycler: Recycler) {
+    for (i in anchor.topLeft..anchor.bottomLeft step columnCount) {
+      if (getDecoratedBottom(findViewByPosition(anchor.topLeft) ?: return) > parentTop) return
+
+      recycleRow(anchor.topLeft, anchor.topRight, recycler)
+    }
+  }
+
+  private fun recycleBottomRows(recycler: Recycler) {
+    for (i in anchor.bottomLeft downTo anchor.topLeft step columnCount) {
+      if (getDecoratedTop(findViewByPosition(anchor.bottomLeft) ?: return) < parentBottom) return
+
+      recycleRow(anchor.bottomLeft, anchor.bottomRight, recycler)
+    }
+  }
+
+  private fun recycleLeftColumns(recycler: Recycler) {
+    for (i in anchor.topLeft..anchor.topRight) {
+      val view = findViewByPosition(anchor.topLeft) ?: return
+      if (getDecoratedRight(view) > parentLeft) return
+
+      recycleColumn(anchor.topLeft, anchor.bottomLeft, recycler)
+    }
+  }
+
+  private fun recycleRightColumns(recycler: Recycler) {
+    for (i in anchor.topRight downTo anchor.topLeft) {
+      val view = findViewByPosition(anchor.topRight) ?: return
+      if (getDecoratedLeft(view) < parentRight) return
+
+      recycleColumn(anchor.topRight, anchor.bottomRight, recycler)
+    }
+  }
+
   private fun recycleRow(from: Int, to: Int, recycler: Recycler) {
     (from..to).forEach { recycleCell(it, recycler) }
 
@@ -300,4 +359,33 @@ class FreelyScrollGridLayoutManager(
   private val Int.isFirstInColumn get() = this < columnCount
   private val Int.isLastInColumn get() = this >= itemCount - columnCount
   private val Int.oneBased get() = this + 1
+
+  private data class SavedState(val position: Int, val left: Int, val top: Int) : Parcelable {
+    constructor(parcel: Parcel) : this(
+      parcel.readInt(),
+      parcel.readInt(),
+      parcel.readInt()
+    )
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+      parcel.writeInt(position)
+      parcel.writeInt(left)
+      parcel.writeInt(top)
+    }
+
+    override fun describeContents(): Int {
+      return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<SavedState> {
+      override fun createFromParcel(parcel: Parcel): SavedState {
+        return SavedState(parcel)
+      }
+
+      override fun newArray(size: Int): Array<SavedState?> {
+        return arrayOfNulls(size)
+      }
+    }
+
+  }
 }
