@@ -111,12 +111,16 @@ class FreelyScrollGridLayoutManager(
       if (bottom <= parentBottom && position < itemCount)
         fillVerticalChunk(position, getDecoratedLeft(topLeftItem), bottom, true, recycler)
 
+      if (anchor.bottomLeft.isLastInColumn) fixVerticalLayoutGap(recycler)
+
       recycleTopRows(recycler)
     } else {
       val top = getDecoratedTop(topLeftItem)
       val position = getAboveCell(anchor.topLeft)
       if (top >= parentTop && position >= 0)
         fillVerticalChunk(position, getDecoratedLeft(topLeftItem), getDecoratedTop(topLeftItem), false, recycler)
+
+      if (anchor.topLeft.isFirstInColumn) fixVerticalLayoutGap(recycler)
 
       recycleBottomRows(recycler)
     }
@@ -139,12 +143,16 @@ class FreelyScrollGridLayoutManager(
       if (right < parentRight && !anchor.topRight.isLastInRow && nextPosition < itemCount)
         fillHorizontalChunk(nextPosition, right, getDecoratedTop(topLeftItem), true, recycler)
 
+      if (anchor.topRight.isLastInRow) fixHorizontalLayoutGap(recycler)
+
       recycleLeftColumns(recycler)
     } else {
       val left = getDecoratedLeft(topLeftItem)
       val previousPosition = anchor.topLeft - 1
       if (left >= parentLeft && !anchor.topLeft.isFirstInRow && previousPosition >= 0)
         fillHorizontalChunk(previousPosition, left, getDecoratedTop(topLeftItem), false, recycler)
+
+      if (anchor.topLeft.isFirstInRow) fixHorizontalLayoutGap(recycler)
 
       recycleRightColumns(recycler)
     }
@@ -177,6 +185,56 @@ class FreelyScrollGridLayoutManager(
       val left = getDecoratedLeft(topLeftItem)
       if (anchor.topLeft.isFirstInRow) if (left >= parentLeft) 0 else max(dx, -(parentLeft - left))
       else dx
+    }
+  }
+
+  private fun fixVerticalLayoutGap(recycler: Recycler) {
+    val topLeftItem = findViewByPosition(anchor.topLeft) ?: return
+    val bottomLeftItem = findViewByPosition(anchor.bottomLeft) ?: return
+
+    val top = getDecoratedTop(topLeftItem)
+    val bottom = getDecoratedBottom(bottomLeftItem)
+    val left = getDecoratedLeft(topLeftItem)
+
+    if (top > parentTop) {
+      val gap = top - parentTop
+      offsetChildrenVertical(-gap)
+
+      if (bottom - gap < parentBottom)
+        fillVerticalChunk(getBelowCell(anchor.bottomLeft), left, bottom - gap, true, recycler)
+    }
+
+    if (bottom < parentBottom) {
+      val gap = parentBottom - bottom
+      offsetChildrenVertical(gap)
+
+      if (top + gap > parentTop)
+        fillVerticalChunk(getAboveCell(anchor.topLeft), left, top + gap, false, recycler)
+    }
+  }
+
+  private fun fixHorizontalLayoutGap(recycler: Recycler) {
+    val topLeftItem = findViewByPosition(anchor.topLeft) ?: return
+    val topRightItem = findViewByPosition(anchor.topRight) ?: return
+
+    val left = getDecoratedLeft(topLeftItem)
+    val right = getDecoratedRight(topRightItem)
+    val top = getDecoratedTop(topLeftItem)
+
+    if (left > parentLeft) {
+      val gap = left - parentLeft
+      offsetChildrenHorizontal(-gap)
+
+      if (right - gap < parentRight)
+        fillHorizontalChunk(anchor.topRight + 1, right - gap, top, true, recycler)
+    }
+
+    if (right < parentRight) {
+      val gap = parentRight - right
+      offsetChildrenHorizontal(gap)
+
+      if (left + gap > parentLeft)
+        fillHorizontalChunk(anchor.topLeft - 1, left + gap, top, false, recycler)
     }
   }
 
@@ -352,13 +410,12 @@ class FreelyScrollGridLayoutManager(
 
   private fun getFirstCellInSameRow(position: Int) = position - position % columnCount
 
-  private fun getLastCellInSameRow(position: Int) = position + columnCount - position.oneBased % columnCount
+  private fun getLastCellInSameRow(position: Int) = position + columnCount - (position % columnCount + 1)
 
   private val Int.isFirstInRow get() = this % columnCount == 0
   private val Int.isLastInRow get() = this % columnCount == columnCount - 1
   private val Int.isFirstInColumn get() = this < columnCount
   private val Int.isLastInColumn get() = this >= itemCount - columnCount
-  private val Int.oneBased get() = this + 1
 
   private data class SavedState(val position: Int, val left: Int, val top: Int) : Parcelable {
     constructor(parcel: Parcel) : this(
