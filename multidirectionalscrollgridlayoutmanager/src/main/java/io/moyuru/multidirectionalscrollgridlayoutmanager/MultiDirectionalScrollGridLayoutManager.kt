@@ -1,4 +1,4 @@
-package io.moyuru.freelyscrollgridlayoutmanager
+package io.moyuru.multidirectionalscrollgridlayoutmanager
 
 import android.graphics.Rect
 import android.os.Parcel
@@ -11,7 +11,7 @@ import androidx.recyclerview.widget.RecyclerView.State
 import kotlin.math.max
 import kotlin.math.min
 
-class FreelyScrollGridLayoutManager(
+class MultiDirectionalScrollGridLayoutManager(
   private val columnCount: Int,
   private val columnWidth: Int,
   private val rowHeight: Int
