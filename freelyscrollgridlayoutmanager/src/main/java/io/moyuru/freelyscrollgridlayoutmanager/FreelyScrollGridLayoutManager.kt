@@ -42,6 +42,7 @@ class FreelyScrollGridLayoutManager(
   private val visibleColumnCount get() = anchor.topRight - anchor.topLeft + 1
 
   private var anchor = Anchor()
+  private var pendingScrollPosition = NO_POSITION
   private var savedState: SavedState? = null
 
   override fun generateDefaultLayoutParams(): RecyclerView.LayoutParams {
@@ -66,6 +67,16 @@ class FreelyScrollGridLayoutManager(
       return
     }
 
+    if (pendingScrollPosition != NO_POSITION) {
+      anchor.reset()
+      detachAndScrapAttachedViews(recycler)
+      anchor.topLeft = pendingScrollPosition
+      fillVerticalChunk(pendingScrollPosition, parentLeft, parentTop, true, recycler)
+      fixVerticalLayoutGap(recycler)
+      fixHorizontalLayoutGap(recycler)
+      return
+    }
+
     val topLeft = findViewByPosition(anchor.topLeft)
     val restoredFirstPosition = savedState?.position ?: anchor.topLeft
     val restoredOffsetX = savedState?.left ?: topLeft?.let(::getDecoratedLeft)
@@ -84,12 +95,18 @@ class FreelyScrollGridLayoutManager(
   }
 
   override fun onLayoutCompleted(state: State?) {
+    pendingScrollPosition = NO_POSITION
     savedState = null
   }
 
   override fun findViewByPosition(position: Int): View? {
     if (position < anchor.topLeft || position > anchor.bottomRight) return null
     return super.findViewByPosition(position)
+  }
+
+  override fun scrollToPosition(position: Int) {
+    pendingScrollPosition = position
+    requestLayout()
   }
 
   override fun canScrollVertically() = true
