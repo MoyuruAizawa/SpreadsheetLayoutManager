@@ -267,7 +267,7 @@ class MultiDirectionalScrollGridLayoutManager(
 
   private fun fillHorizontalChunk(from: Int, startX: Int, offsetY: Int, isAppend: Boolean, recycler: Recycler) {
     var offsetX = startX
-    val range = if (isAppend) from..getLastCellInSameRow(from) else from downTo getFirstCellInSameRow(from)
+    val range = if (isAppend) from..getLastCellInRow(from) else from downTo getFirstCellInRow(from)
     for (position in range) {
       val columnWidth = fillColumn(position, offsetX, offsetY, isAppend, recycler)
       offsetX += if (isAppend) columnWidth else -columnWidth
@@ -282,7 +282,7 @@ class MultiDirectionalScrollGridLayoutManager(
     var offsetX = startX
     var rowHeight = 0
     var addPosition = if (isAppend) -1 else 0
-    for (position in from..getLastCellInSameRow(from)) {
+    for (position in from..getLastCellInRow(from)) {
       val (width, height) = addCell(position, addPosition, offsetX, startY, direction, recycler)
 
       if (from == anchor.topLeft && isAppend) anchor.topRight = position
@@ -425,9 +425,13 @@ class MultiDirectionalScrollGridLayoutManager(
 
   private fun getBelowCell(position: Int) = position + columnCount
 
-  private fun getFirstCellInSameRow(position: Int) = position - position % columnCount
+  private fun getFirstCellInRow(position: Int): Int {
+    return position - position % columnCount
+  }
 
-  private fun getLastCellInSameRow(position: Int) = position + columnCount - (position % columnCount + 1)
+  private fun getLastCellInRow(position: Int): Int {
+    return min(position + columnCount - (position % columnCount + 1), itemCount - 1)
+  }
 
   private val Int.isFirstInRow get() = this % columnCount == 0
   private val Int.isLastInRow get() = this % columnCount == columnCount - 1
