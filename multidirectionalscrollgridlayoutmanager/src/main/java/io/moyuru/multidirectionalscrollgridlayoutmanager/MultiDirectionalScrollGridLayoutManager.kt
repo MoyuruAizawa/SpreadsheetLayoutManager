@@ -3,6 +3,7 @@ package io.moyuru.multidirectionalscrollgridlayoutmanager
 import android.graphics.Rect
 import android.os.Parcel
 import android.os.Parcelable
+import android.util.Log
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.NO_POSITION
@@ -65,6 +66,14 @@ class MultiDirectionalScrollGridLayoutManager(
       anchor.reset()
       detachAndScrapAttachedViews(recycler)
       return
+    }
+
+    if (BuildConfig.DEBUG && itemCount % columnCount != 0) {
+      val shortage = columnCount - (itemCount % columnCount)
+      Log.w(
+        MultiDirectionalScrollGridLayoutManager::class.java.simpleName,
+        "The last row should be filled. Append $shortage ${if (shortage > 1) "items" else "item"}."
+      )
     }
 
     if (pendingScrollPosition != NO_POSITION) {
