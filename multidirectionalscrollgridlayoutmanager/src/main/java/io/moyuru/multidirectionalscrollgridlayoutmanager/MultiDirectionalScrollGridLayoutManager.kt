@@ -204,6 +204,25 @@ class MultiDirectionalScrollGridLayoutManager(
     return (anchor.topLeft / columnCount) * computeAverageHeightPerRow(topItem, bottomItem) - getDecoratedTop(topItem)
   }
 
+  override fun computeHorizontalScrollExtent(state: State): Int {
+    val left = getDecoratedLeft(findViewByPosition(anchor.topLeft) ?: return 0)
+    val right = getDecoratedRight(findViewByPosition(anchor.topRight) ?: return 0)
+    return min(right - left, parentRight - parentLeft)
+  }
+
+  override fun computeHorizontalScrollRange(state: State): Int {
+    val leftItem = findViewByPosition(anchor.topLeft) ?: return 0
+    val rightItem = findViewByPosition(anchor.topRight) ?: return 0
+    return computeAverageWidthPerColumn(leftItem, rightItem) * columnCount
+  }
+
+  override fun computeHorizontalScrollOffset(state: State): Int {
+    val leftItem = findViewByPosition(anchor.topLeft) ?: return 0
+    val rightItem = findViewByPosition(anchor.topRight) ?: return 0
+    val left = getDecoratedLeft(leftItem)
+    return (anchor.topLeft % columnCount) * computeAverageWidthPerColumn(leftItem, rightItem) - left
+  }
+
   private fun calcVerticallyScrollAmount(topLeftItem: View, bottomLeftItem: View, dy: Int): Int {
     if (dy == 0) return 0
 
@@ -237,6 +256,14 @@ class MultiDirectionalScrollGridLayoutManager(
     val bottom = getDecoratedBottom(bottomItem)
     val laidOutArea = bottom - top
     val laidOutRange = (anchor.bottomLeft - anchor.topLeft) / columnCount + 1
+    return laidOutArea / laidOutRange
+  }
+
+  private fun computeAverageWidthPerColumn(leftItem: View, rightItem: View): Int {
+    val left = getDecoratedLeft(leftItem)
+    val right = getDecoratedRight(rightItem)
+    val laidOutArea = right - left
+    val laidOutRange = (anchor.topRight - anchor.topLeft) + 1
     return laidOutArea / laidOutRange
   }
 
