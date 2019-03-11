@@ -11,17 +11,27 @@ import androidx.recyclerview.widget.RecyclerView.ItemDecoration
 import androidx.recyclerview.widget.RecyclerView.State
 
 class DividerDecoration : ItemDecoration() {
-  private val paint = Paint().apply {
-    color = Color.BLACK
-    strokeWidth = 2.dp.toFloat()
-  }
+
+  private val dividerWidth = 2.dp
+  private val paint = Paint().apply { color = Color.BLACK }
 
   override fun onDraw(c: Canvas, parent: RecyclerView, state: State) {
-    super.onDraw(c, parent, state)
     (0 until parent.childCount).map(parent::getChildAt)
       .forEach {
-        c.drawLine(it.left.toFloat(), it.bottom.toFloat(), it.right.toFloat(), it.bottom.toFloat(), paint)
-        c.drawLine(it.right.toFloat(), it.top.toFloat(), it.right.toFloat(), it.bottom.toFloat(), paint)
+        c.drawRect(
+          it.left.toFloat(),
+          it.bottom.toFloat(),
+          it.right.toFloat(),
+          it.bottom.toFloat() + dividerWidth,
+          paint
+        )
+        c.drawRect(
+          it.right.toFloat(),
+          it.top.toFloat(),
+          it.right.toFloat() + dividerWidth,
+          it.bottom.toFloat() + dividerWidth,
+          paint
+        )
       }
   }
 
