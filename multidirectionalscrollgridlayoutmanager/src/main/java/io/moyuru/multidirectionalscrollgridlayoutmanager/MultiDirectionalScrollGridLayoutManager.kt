@@ -358,12 +358,14 @@ class MultiDirectionalScrollGridLayoutManager(
   }
 
   private fun fillColumn(from: Int, startX: Int, startY: Int, isAppend: Boolean, recycler: Recycler): Int {
+    val visibleColumnCount = anchor.topRight - anchor.topLeft + 1
+
     if (isAppend) anchor.topRight = from else anchor.topLeft = from
     val direction = if (isAppend) Direction.RIGHT else Direction.LEFT
 
     var offsetY = startY
     var columnWidth = 0
-    var addPosition = 0
+    var addPosition = if (isAppend) visibleColumnCount else 0
     var position = from
     while (position < itemCount && offsetY <= parentBottom) {
       val (width, height) = addCell(position, addPosition, startX, offsetY, direction, recycler)
