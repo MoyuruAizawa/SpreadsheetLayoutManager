@@ -2,7 +2,7 @@ package io.moyuru.spreadsheetlayoutmanager
 
 import androidx.recyclerview.widget.RecyclerView
 
-class SpreadSheetLayoutManager(
+class SpreadsheetLayoutManager(
   columnCount: Int,
   private val columnWidthLookUp: (columnNumber: Int) -> Int,
   private val rowHeightLookUp: (rowNumber: Int) -> Int
