@@ -358,7 +358,7 @@ class MultiDirectionalScrollGridLayoutManager(
   }
 
   private fun fillColumn(from: Int, startX: Int, startY: Int, isAppend: Boolean, recycler: Recycler): Int {
-    val visibleColumnCount = anchor.topRight - anchor.topLeft + 1
+    val visibleColumnCount = visibleColumnCount
 
     if (isAppend) anchor.topRight = from else anchor.topLeft = from
     val direction = if (isAppend) Direction.RIGHT else Direction.LEFT
