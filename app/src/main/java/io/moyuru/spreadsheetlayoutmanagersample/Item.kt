@@ -1,4 +1,4 @@
-package io.moyuru.multidirectionalscrollgridlayoutmanagersample
+package io.moyuru.spreadsheetlayoutmanagersample
 
 import com.xwray.groupie.Item
 import com.xwray.groupie.ViewHolder

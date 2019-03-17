@@ -1,1 +1,1 @@
-include ':app', ':multidirectionalscrollgridlayoutmanager'
+include ':app', ':spreadsheetlayoutmanager'

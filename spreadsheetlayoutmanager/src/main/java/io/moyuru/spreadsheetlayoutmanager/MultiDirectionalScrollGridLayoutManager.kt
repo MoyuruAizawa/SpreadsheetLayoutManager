@@ -1,4 +1,4 @@
-package io.moyuru.multidirectionalscrollgridlayoutmanager
+package io.moyuru.spreadsheetlayoutmanager
 
 import android.graphics.Rect
 import android.os.Parcel

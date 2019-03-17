@@ -1,4 +1,4 @@
-package io.moyuru.multidirectionalscrollgridlayoutmanagersample
+package io.moyuru.spreadsheetlayoutmanagersample
 
 import android.content.res.Resources
 import android.graphics.Canvas

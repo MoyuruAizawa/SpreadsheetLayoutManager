@@ -1,10 +1,10 @@
-package io.moyuru.multidirectionalscrollgridlayoutmanagersample
+package io.moyuru.spreadsheetlayoutmanagersample
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.ViewHolder
-import io.moyuru.multidirectionalscrollgridlayoutmanager.MultiDirectionalScrollGridLayoutManager
+import io.moyuru.spreadsheetlayoutmanager.MultiDirectionalScrollGridLayoutManager
 import kotlinx.android.synthetic.main.activity_main.recycler
 
 class MainActivity : AppCompatActivity() {
