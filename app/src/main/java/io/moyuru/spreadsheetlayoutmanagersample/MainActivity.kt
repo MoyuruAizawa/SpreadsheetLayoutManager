@@ -14,12 +14,13 @@ class MainActivity : AppCompatActivity() {
 
   private val adapter = GroupAdapter<ViewHolder>()
   private val columnCount = 10
+  private val spreadsheetDecoration = SpreadsheetDividerDecoration(columnCount)
+  private val multiDirectionalDecoration = DividerDecoration()
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
 
-    recyclerView.addItemDecoration(DividerDecoration())
     recyclerView.adapter = adapter.apply { update(List(200) { CellItem(it) }) }
     useSpreadSheet()
   }
@@ -39,11 +40,15 @@ class MainActivity : AppCompatActivity() {
   }
 
   private fun useSpreadSheet() {
+    recyclerView.removeItemDecoration(multiDirectionalDecoration)
+    recyclerView.addItemDecoration(spreadsheetDecoration)
     recyclerView.layoutManager =
       SpreadsheetLayoutManager(columnCount, { if (it == 0) 35.dp else 75.dp }, { if (it == 0) 35.dp else 75.dp })
   }
 
   private fun useMultiDirectionalScrollGrid() {
+    recyclerView.removeItemDecoration(spreadsheetDecoration)
+    recyclerView.addItemDecoration(multiDirectionalDecoration)
     recyclerView.layoutManager = MultiDirectionalScrollGridLayoutManager(10, 100.dp, 100.dp)
   }
 }
