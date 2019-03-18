@@ -125,7 +125,7 @@ abstract class AbsMultiDirectionalScrollGridLayoutManager(protected val columnCo
     val topLeftItem = findViewByPosition(anchor.topLeft) ?: return 0
     val bottomLeftItem = findViewByPosition(anchor.bottomLeft) ?: return 0
 
-    val actualDy = calcActualVerticalDistance(topLeftItem, bottomLeftItem, dy)
+    val actualDy = calcActualDy(topLeftItem, bottomLeftItem, dy)
     if (actualDy == 0) return 0
     offsetChildrenVertical(-actualDy)
 
@@ -158,7 +158,7 @@ abstract class AbsMultiDirectionalScrollGridLayoutManager(protected val columnCo
     val topLeftItem = findViewByPosition(anchor.topLeft) ?: return 0
     val topRightItem = findViewByPosition(anchor.topRight) ?: return 0
 
-    val actualDx = calcActualHorizontalDistance(topLeftItem, topRightItem, dx)
+    val actualDx = calcActualDx(topLeftItem, topRightItem, dx)
     if (actualDx == 0) return 0
     offsetChildrenHorizontal(-actualDx)
 
@@ -222,7 +222,7 @@ abstract class AbsMultiDirectionalScrollGridLayoutManager(protected val columnCo
     return (anchor.topLeft % columnCount) * computeAverageWidthPerColumn(leftItem, rightItem) - left
   }
 
-  private fun calcActualVerticalDistance(topLeftItem: View, bottomLeftItem: View, dy: Int): Int {
+  private fun calcActualDy(topLeftItem: View, bottomLeftItem: View, dy: Int): Int {
     if (dy == 0) return 0
 
     return if (dy > 0) { // up swipe
@@ -236,7 +236,7 @@ abstract class AbsMultiDirectionalScrollGridLayoutManager(protected val columnCo
     }
   }
 
-  private fun calcActualHorizontalDistance(topLeftItem: View, topRightItem: View, dx: Int): Int {
+  private fun calcActualDx(topLeftItem: View, topRightItem: View, dx: Int): Int {
     if (dx == 0) return 0
 
     return if (dx > 0) { // left swipe
