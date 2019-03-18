@@ -1,3 +1,5 @@
 <resources>
   <string name="app_name">SpreadsheetLayoutManagerSample</string>
+  <string name="multidirectionalscrollgridlayoutmanager">MultiDirectionalScrollGridLayoutManager</string>
+  <string name="spreadsheetlayoutmanager">SpreadsheetLayoutManager</string>
 </resources>

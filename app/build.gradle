@@ -10,7 +10,7 @@ android {
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
         release {
@@ -22,7 +22,10 @@ android {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "androidx.appcompat:appcompat:1.1.0-alpha02"
+    implementation "androidx.constraintlayout:constraintlayout:2.0.0-alpha3"
     implementation "com.google.android.material:material:1.0.0"
     implementation 'com.xwray:groupie:2.3.0'
     implementation project(':spreadsheetlayoutmanager')
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0-beta01'
 }

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  >
+  <item
+    android:id="@+id/action_spreadsheet"
+    android:title="@string/spreadsheetlayoutmanager"
+    app:showAsAction="never"
+    />
+  <item
+    android:id="@+id/action_multidirectionalscrollgrid"
+    android:title="@string/multidirectionalscrollgridlayoutmanager"
+    app:showAsAction="never"
+    />
+</menu>
