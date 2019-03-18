@@ -125,9 +125,9 @@ abstract class AbsMultiDirectionalScrollGridLayoutManager(protected val columnCo
     val topLeftItem = findViewByPosition(anchor.topLeft) ?: return 0
     val bottomLeftItem = findViewByPosition(anchor.bottomLeft) ?: return 0
 
-    val scrollAmount = calcVerticallyScrollAmount(topLeftItem, bottomLeftItem, dy)
-    if (scrollAmount == 0) return 0
-    offsetChildrenVertical(-scrollAmount)
+    val actualDy = calcActualVerticalDistance(topLeftItem, bottomLeftItem, dy)
+    if (actualDy == 0) return 0
+    offsetChildrenVertical(-actualDy)
 
     if (dy > 0) {
       val bottom = getDecoratedBottom(bottomLeftItem)
@@ -149,7 +149,7 @@ abstract class AbsMultiDirectionalScrollGridLayoutManager(protected val columnCo
       recycleBottomRows(recycler)
     }
 
-    return scrollAmount
+    return actualDy
   }
 
   override fun scrollHorizontallyBy(dx: Int, recycler: Recycler, state: State): Int {
@@ -158,9 +158,9 @@ abstract class AbsMultiDirectionalScrollGridLayoutManager(protected val columnCo
     val topLeftItem = findViewByPosition(anchor.topLeft) ?: return 0
     val topRightItem = findViewByPosition(anchor.topRight) ?: return 0
 
-    val scrollAmount = calcHorizontallyScrollAmount(topLeftItem, topRightItem, dx)
-    if (scrollAmount == 0) return 0
-    offsetChildrenHorizontal(-scrollAmount)
+    val actualDx = calcActualHorizontalDistance(topLeftItem, topRightItem, dx)
+    if (actualDx == 0) return 0
+    offsetChildrenHorizontal(-actualDx)
 
     if (dx > 0) {
       val right = getDecoratedRight(topRightItem)
@@ -182,7 +182,7 @@ abstract class AbsMultiDirectionalScrollGridLayoutManager(protected val columnCo
       recycleRightColumns(recycler)
     }
 
-    return scrollAmount
+    return actualDx
   }
 
   override fun computeVerticalScrollExtent(state: State): Int {
@@ -222,7 +222,7 @@ abstract class AbsMultiDirectionalScrollGridLayoutManager(protected val columnCo
     return (anchor.topLeft % columnCount) * computeAverageWidthPerColumn(leftItem, rightItem) - left
   }
 
-  private fun calcVerticallyScrollAmount(topLeftItem: View, bottomLeftItem: View, dy: Int): Int {
+  private fun calcActualVerticalDistance(topLeftItem: View, bottomLeftItem: View, dy: Int): Int {
     if (dy == 0) return 0
 
     return if (dy > 0) { // up swipe
@@ -236,7 +236,7 @@ abstract class AbsMultiDirectionalScrollGridLayoutManager(protected val columnCo
     }
   }
 
-  private fun calcHorizontallyScrollAmount(topLeftItem: View, topRightItem: View, dx: Int): Int {
+  private fun calcActualHorizontalDistance(topLeftItem: View, topRightItem: View, dx: Int): Int {
     if (dx == 0) return 0
 
     return if (dx > 0) { // left swipe
