@@ -12,12 +12,15 @@ import kotlinx.android.synthetic.main.activity_main.recyclerView
 
 class MainActivity : AppCompatActivity() {
 
+  private val adapter = GroupAdapter<ViewHolder>()
+  private val columnCount = 10
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
 
     recyclerView.addItemDecoration(DividerDecoration())
-    recyclerView.adapter = GroupAdapter<ViewHolder>().apply { addAll(List(200) { CellItem(it) }) }
+    recyclerView.adapter = adapter.apply { update(List(200) { CellItem(it) }) }
     useSpreadSheet()
   }
 
@@ -36,15 +39,8 @@ class MainActivity : AppCompatActivity() {
   }
 
   private fun useSpreadSheet() {
-    recyclerView.layoutManager = SpreadsheetLayoutManager(10,
-      {
-        when {
-          it == 0 -> 50.dp
-          it % 2 == 0 -> 100.dp
-          else -> 150.dp
-        }
-      },
-      { 50.dp })
+    recyclerView.layoutManager =
+      SpreadsheetLayoutManager(columnCount, { if (it == 0) 35.dp else 75.dp }, { if (it == 0) 35.dp else 75.dp })
   }
 
   private fun useMultiDirectionalScrollGrid() {
