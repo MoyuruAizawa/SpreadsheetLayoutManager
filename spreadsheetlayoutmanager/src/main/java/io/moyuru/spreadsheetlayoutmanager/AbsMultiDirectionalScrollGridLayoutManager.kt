@@ -126,6 +126,7 @@ abstract class AbsMultiDirectionalScrollGridLayoutManager(protected val columnCo
     val bottomLeftItem = findViewByPosition(anchor.bottomLeft) ?: return 0
 
     val scrollAmount = calcVerticallyScrollAmount(topLeftItem, bottomLeftItem, dy)
+    if (scrollAmount == 0) return 0
     offsetChildrenVertical(-scrollAmount)
 
     if (dy > 0) {
@@ -158,6 +159,7 @@ abstract class AbsMultiDirectionalScrollGridLayoutManager(protected val columnCo
     val topRightItem = findViewByPosition(anchor.topRight) ?: return 0
 
     val scrollAmount = calcHorizontallyScrollAmount(topLeftItem, topRightItem, dx)
+    if (scrollAmount == 0) return 0
     offsetChildrenHorizontal(-scrollAmount)
 
     if (dx > 0) {
